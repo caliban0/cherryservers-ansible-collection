@@ -1,6 +1,13 @@
 ---
 - name: Run tests
   block:
+    - name: create project
+      cherryservers.cloud.project:
+        auth_token: "{{ cherryservers_api_key }}"
+        name: "ansible-test-server-full"
+        team_id: "{{ cherryservers_team_id }}"
+      register: project
+
     - name: create ssh key for server testing
       cherryservers.cloud.sshkey:
         label: "{{ fake_key_label }}"
@@ -16,7 +23,7 @@
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
         region: "{{ server_region }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: fip
     - name: verify create floating ip for server testing
       ansible.builtin.assert:
@@ -26,7 +33,7 @@
     - name: test create server with check mode
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ server_region }}"
         plan: "{{ server_plan }}"
         hostname: "{{ server_hostname }}"
@@ -46,7 +53,7 @@
     - name: test no server actually created
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ server_hostname }}"
       register: result
     - name: verify no server actually created
@@ -58,7 +65,7 @@
     - name: test create server
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ server_region }}"
         plan: "{{ server_plan }}"
         hostname: "{{ server_hostname }}"
@@ -95,7 +102,7 @@
     - name: test server creation idempotency with check mode
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ server_region }}"
         plan: "{{ server_plan }}"
         hostname: "{{ server_hostname }}"
@@ -114,7 +121,7 @@
     - name: test server creation idempotency
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ server_region }}"
         plan: "{{ server_plan }}"
         hostname: "{{ server_hostname }}"
@@ -133,7 +140,7 @@
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
         hostname: "{{ server_hostname }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags: "{{ server_update_tags }}"
         ssh_keys: [ "{{ sshkey.cherryservers_sshkey.id }}" ]
         user_data: "{{ server_user_data }}"
@@ -148,7 +155,7 @@
     - name: test reinstall server with check mode
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ server_hostname }}"
         tags: "{{ server_update_tags }}"
         ssh_keys: [ "{{ sshkey.cherryservers_sshkey.id }}" ]
@@ -180,7 +187,7 @@
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
         hostname: "{{ server_hostname }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags: "{{ server_update_tags }}"
         ssh_keys: [ "{{ sshkey.cherryservers_sshkey.id }}" ]
         user_data: "{{ server_user_data }}"
@@ -195,7 +202,7 @@
     - name: test reinstall server actually happened
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ server_hostname }}"
         tags: "{{ server_update_tags }}"
         image: "{{ server_reinstall_image }}"
@@ -210,7 +217,7 @@
 
     - name: test server reinstall idempotency with check mode
       cherryservers.cloud.server:
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
         hostname: "{{ server_hostname }}"
         tags: "{{ server_update_tags }}"
@@ -227,7 +234,7 @@
     - name: test server reinstall idempotency
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ server_hostname }}"
         tags: "{{ server_update_tags }}"
         ssh_keys: [ "{{ sshkey.cherryservers_sshkey.id }}" ]
@@ -240,19 +247,8 @@
           - result is not changed
 
   always:
-    - name: delete servers
-      cherryservers.cloud.server:
-        project_id: "{{ cherryservers_project_id }}"
-        hostname: "{{ server_hostname }}"
-        auth_token: "{{ cherryservers_api_key }}"
-        state: absent
-    - name: delete ssh key
-      cherryservers.cloud.sshkey:
-        id: "{{ sshkey.cherryservers_sshkey.id }}"
-        auth_token: "{{ cherryservers_api_key }}"
-        state: absent
-    - name: delete floating ip
-      cherryservers.cloud.floating_ip:
-        id: [ "{{ fip.cherryservers_floating_ip.id }}" ]
+    - name: delete project
+      cherryservers.cloud.project:
+        id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
         state: absent

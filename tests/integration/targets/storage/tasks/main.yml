@@ -1,10 +1,30 @@
 ---
 - name: Run tests
   block:
+    - name: create project
+      cherryservers.cloud.project:
+        auth_token: "{{ cherryservers_api_key }}"
+        name: "ansible-test-storage"
+        team_id: "{{ cherryservers_team_id }}"
+      register: project
+
+    - name: create baremetal server
+      cherryservers.cloud.server:
+        auth_token: "{{ cherryservers_api_key }}"
+        region: "{{ storage_region }}"
+        plan: "{{ cherryservers_baremetal_plan_slug }}"
+        project_id: "{{ project.cherryservers_project.id }}"
+      register: server
+
+    # Error 500 if attaching storage right after server creation.
+    - name: Wait for server
+      ansible.builtin.pause:
+        seconds: 120
+
     - name: test create storage with missing parameters
       cherryservers.cloud.storage:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
       register: storage
       ignore_errors: true
@@ -16,9 +36,9 @@
     - name: test create storage with check mode
       cherryservers.cloud.storage:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
-        target_server_id: "{{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
         description: "{{ storage_description }}"
         size: "{{ storage_size }}"
       register: storage
@@ -31,9 +51,9 @@
     - name: test no storage actually created
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         description: "{{ storage_description }}"
-        target_server_id: " {{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
       register: result
     - name: verify no storage actually created
       ansible.builtin.assert:
@@ -43,9 +63,9 @@
     - name: test create storage
       cherryservers.cloud.storage:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
-        target_server_id: "{{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
         description: "{{ storage_description }}"
         size: "{{ storage_size }}"
       register: storage
@@ -73,9 +93,9 @@
       cherryservers.cloud.storage:
         auth_token: "{{ cherryservers_api_key }}"
         id: "{{ storage.cherryservers_storage.id }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
-        target_server_id: "{{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
         description: "{{ storage_description }}"
         size: "{{ storage_size }}"
       register: result
@@ -89,9 +109,9 @@
       cherryservers.cloud.storage:
         auth_token: "{{ cherryservers_api_key }}"
         id: "{{ storage.cherryservers_storage.id }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
-        target_server_id: "{{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
         description: "{{ storage_description }}"
         size: "{{ storage_size }}"
       register: result
@@ -147,7 +167,7 @@
     - name: test storage is updated
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         description: "{{ storage_updated_description }}"
       register: updated_storage
     - name: verify storage is updated
@@ -188,7 +208,7 @@
       cherryservers.cloud.storage:
         id: "{{ updated_storage.cherryservers_storages[0].id }}"
         auth_token: "{{ cherryservers_api_key }}"
-        target_server_id: "{{ cherryservers_baremetal_server_id }}"
+        target_server_id: "{{ server.cherryservers_server.id }}"
       register: result
     - name: verify attach storage
       ansible.builtin.assert:
@@ -284,8 +304,8 @@
           - result is not changed
 
   always:
-    - name: delete storage
-      cherryservers.cloud.storage:
-        id: "{{ updated_storage.cherryservers_storages[0].id }}"
+    - name: delete project
+      cherryservers.cloud.project:
+        id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
         state: absent

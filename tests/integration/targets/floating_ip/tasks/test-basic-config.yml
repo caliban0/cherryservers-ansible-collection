@@ -1,11 +1,18 @@
 ---
 - name: Run tests
   block:
+    - name: create project
+      cherryservers.cloud.project:
+        auth_token: "{{ cherryservers_api_key }}"
+        name: "ansible-test-fip-basic"
+        team_id: "{{ cherryservers_team_id }}"
+      register: project
+
     - name: create server
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
         region: "{{ fip_region }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         plan: "{{ server_plan }}"
       register: server
     - name: verify create server
@@ -16,7 +23,7 @@
     - name: test create floating ip missing parameter
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: fip
       ignore_errors: true
     - name: verify create floating ip missing parameter
@@ -27,7 +34,7 @@
     - name: test create floating ip with check mode
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         tags:
           env: "none"
@@ -41,7 +48,7 @@
     - name: test no floating ip actually created
       cherryservers.cloud.floating_ip_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags:
           env: "none"
       register: result
@@ -54,7 +61,7 @@
     - name: test create floating ip
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
       register: fip
     - name: verify create floating ip
@@ -78,7 +85,7 @@
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
         id: "{{ fip.cherryservers_floating_ip.id }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
       register: result
       check_mode: true
@@ -91,7 +98,7 @@
       cherryservers.cloud.floating_ip:
         auth_token: "{{ cherryservers_api_key }}"
         id: "{{ fip.cherryservers_floating_ip.id }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
       register: result
     - name: verify floating ip creation idempotency
@@ -103,7 +110,7 @@
       cherryservers.cloud.floating_ip:
         id: "{{ fip.cherryservers_floating_ip.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         route_ip_id: "{{ server.cherryservers_server.ip_addresses[0].id }}"
         a_record: "{{ fip_a_record_basic }}"
@@ -120,7 +127,7 @@
       cherryservers.cloud.floating_ip_info:
         auth_token: "{{ cherryservers_api_key }}"
         id: "{{ fip.cherryservers_floating_ip.id }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         tags: "{{ fip_tags_basic }}"
         target_server_id: "{{ server.cherryservers_server.id }}"
@@ -135,7 +142,7 @@
       cherryservers.cloud.floating_ip:
         id: "{{ fip.cherryservers_floating_ip.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         route_ip_id: "{{ server.cherryservers_server.ip_addresses[0].id }}"
         a_record: "{{ fip_a_record_basic }}"
@@ -166,7 +173,7 @@
       cherryservers.cloud.floating_ip:
         id: "{{ fip.cherryservers_floating_ip.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         route_ip_id: "{{ server.cherryservers_server.ip_addresses[0].id }}"
         a_record: "{{ fip_a_record_basic }}"
@@ -183,7 +190,7 @@
       cherryservers.cloud.floating_ip:
         id: "{{ fip.cherryservers_floating_ip.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ fip_region }}"
         route_ip_id: "{{ server.cherryservers_server.ip_addresses[0].id }}"
         a_record: "{{ fip_a_record_basic }}"
@@ -277,13 +284,8 @@
           - result is not changed
 
   always:
-    - name: delete server
-      cherryservers.cloud.server:
-        id: "{{ server.cherryservers_server.id }}"
-        auth_token: "{{ cherryservers_api_key }}"
-        state: absent
-    - name: delete floating ip
-      cherryservers.cloud.floating_ip:
-        id: "{{ fip.cherryservers_floating_ip.id }}"
+    - name: delete project
+      cherryservers.cloud.project:
+        id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
         state: absent

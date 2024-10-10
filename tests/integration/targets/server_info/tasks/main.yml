@@ -1,11 +1,18 @@
 ---
 - name: Run tests
   block:
+    - name: create project
+      cherryservers.cloud.project:
+        auth_token: "{{ cherryservers_api_key }}"
+        name: "ansible-test-server-info"
+        team_id: "{{ cherryservers_team_id }}"
+      register: project
+
     - name: create first server
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
         region: "{{ server_region }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         plan: "{{ server_plan }}"
         tags: "{{ server_tags }}"
         state: "present"
@@ -19,7 +26,7 @@
       cherryservers.cloud.server:
         auth_token: "{{ cherryservers_api_key }}"
         region: "{{ server_region }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         plan: "{{ server_plan }}"
         tags: "{{ server_tags }}"
         state: "active"
@@ -32,7 +39,7 @@
     - name: test gather by project_id
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: result
     - name: verify gather by project_id
       ansible.builtin.assert:
@@ -43,7 +50,7 @@
     - name: test gather by project_id with check mode
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       check_mode: true
       register: result
     - name: verify gather by project_id with check mode
@@ -89,7 +96,7 @@
     - name: test gather server by hostname
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ second_server.cherryservers_server.hostname }}"
       register: result
     - name: verify gather server by hostname
@@ -101,7 +108,7 @@
     - name: test gather server by hostname with check mode
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ second_server.cherryservers_server.hostname }}"
       check_mode: true
       register: result
@@ -114,7 +121,7 @@
     - name: test gather server by hostname wrong
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "none"
       register: result
     - name: verify gather server by hostname wrong
@@ -126,7 +133,7 @@
     - name: test gather server by tags
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags: "{{ server_tags }}"
       register: result
     - name: verify gather server by tags
@@ -138,7 +145,7 @@
     - name: test gather server by tags with check mode
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags: "{{ server_tags }}"
       check_mode: true
       register: result
@@ -151,7 +158,7 @@
     - name: test gather server by tags wrong
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         tags:
           env: "none"
       register: result
@@ -165,7 +172,7 @@
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
         tags: "{{ server_tags }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         hostname: "{{ second_server.cherryservers_server.hostname }}"
       register: result
     - name: verify gather multiple options
@@ -177,7 +184,7 @@
     - name: test gather with all options
       cherryservers.cloud.server_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         plan: "{{ second_server.cherryservers_server.plan }}"
         image: "{{ second_server.cherryservers_server.image }}"
         region: "{{ second_server.cherryservers_server.region }}"
@@ -191,24 +198,8 @@
           - result.cherryservers_servers | list | count == 1
           - result is not changed
   always:
-    - name: delete first server
-      cherryservers.cloud.server:
-        id: "{{ first_server.cherryservers_server.id }}"
-        state: "absent"
+    - name: delete project
+      cherryservers.cloud.project:
+        id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-      register: result
-    - name: verify delete first server
-      ansible.builtin.assert:
-        that:
-          - result is changed
-
-    - name: delete second server
-      cherryservers.cloud.server:
-        id: "{{ second_server.cherryservers_server.id }}"
-        state: "absent"
-        auth_token: "{{ cherryservers_api_key }}"
-      register: result
-    - name: verify delete second server
-      ansible.builtin.assert:
-        that:
-          - result is changed
+        state: absent

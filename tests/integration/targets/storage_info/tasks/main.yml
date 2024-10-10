@@ -1,9 +1,16 @@
 ---
 - name: Run tests
   block:
+    - name: create project
+      cherryservers.cloud.project:
+        auth_token: "{{ cherryservers_api_key }}"
+        name: "ansible-test-storage-info"
+        team_id: "{{ cherryservers_team_id }}"
+      register: project
+
     - name: create storage
       cherryservers.cloud.storage:
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
         size: "{{ storage_size }}"
         state: "detached"
@@ -28,7 +35,7 @@
     - name: test gather by project id
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: result
     - name: verify gather by project id
       ansible.builtin.assert:
@@ -39,7 +46,7 @@
     - name: test gather by project id with check mode
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: result
       check_mode: true
     - name: verify gather by project id with check mode
@@ -54,7 +61,7 @@
         state: "detached"
         id: "{{ storage.cherryservers_storage.id }}"
         description: "{{ storage_description  }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
       register: result
     - name: verify gather with all params
@@ -69,7 +76,7 @@
         state: "detached"
         id: "{{ storage.cherryservers_storage.id }}"
         description: "{{ storage_description  }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
       register: result
       check_mode: true
@@ -93,7 +100,7 @@
     - name: test gather by region
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
         region: "{{ storage_region }}"
       register: result
     - name: verify gather by region
@@ -106,7 +113,7 @@
       cherryservers.cloud.storage_info:
         auth_token: "{{ cherryservers_api_key }}"
         state: "detached"
-        project_id: "{{ cherryservers_project_id }}"
+        project_id: "{{ project.cherryservers_project.id }}"
       register: result
     - name: verify gather with detached state
       ansible.builtin.assert:
@@ -115,9 +122,8 @@
           - result is not changed
 
   always:
-    - name: delete storage
-      cherryservers.cloud.storage:
-        id: "{{ storage.cherryservers_storage.id }}"
-        state: "absent"
+    - name: delete project
+      cherryservers.cloud.project:
+        id: "{{ project.cherryservers_project.id }}"
         auth_token: "{{ cherryservers_api_key }}"
-      register: result
+        state: absent
