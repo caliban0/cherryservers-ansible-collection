@@ -360,7 +360,10 @@ class ServerModule(standard_module.StandardModule):
                 reinstall_req[k] = params[k]
 
         if reinstall_req:
-            if reinstall_req.get("ssh_keys", None) is None and resource["ssh_keys"] is not None:
+            if (
+                reinstall_req.get("ssh_keys", None) is None
+                and resource["ssh_keys"] is not None
+            ):
                 reinstall_req["ssh_keys"] = resource["ssh_keys"]
             if reinstall_req.get("image", None) is None:
                 reinstall_req["image"] = resource["image"]
