@@ -1,0 +1,5 @@
+bugfixes:
+  - 
+    On server reinstall, set SSH keys to the previous value,
+    if there is no difference between it and the provided option.
+    Previously, this would result in no SSH key assignment to the server.
