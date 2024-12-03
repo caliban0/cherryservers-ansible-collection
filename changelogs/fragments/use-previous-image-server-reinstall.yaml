@@ -1,0 +1,2 @@
+bugfixes:
+  - server reinstall - use previous image when reinstalling server, if no option is provided.
