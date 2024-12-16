@@ -10,7 +10,7 @@ from .. import normalizers
 class SSHKeyManager(ResourceManager):
     """Manage Cherry Servers SSH key resources."""
 
-    DEFAULT_TIMEOUT=120
+    DEFAULT_TIMEOUT = 120
 
     @property
     def name(self) -> str:

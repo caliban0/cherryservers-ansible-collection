@@ -20,7 +20,9 @@ class FloatingIPManager(ResourceManager):
     def _normalize(self, resource: dict) -> dict:
         return normalizers.normalize_fip(resource)
 
-    def create(self, project_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def create(
+        self, project_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Create a Cherry Servers floating IP resource."""
         return self.perform_request(
             Request(
@@ -68,7 +70,9 @@ class FloatingIPManager(ResourceManager):
             )
         )
 
-    def get_by_project_id(self, project_id: str, timeout: int = DEFAULT_TIMEOUT) -> List[dict]:
+    def get_by_project_id(
+        self, project_id: str, timeout: int = DEFAULT_TIMEOUT
+    ) -> List[dict]:
         """Get a list of Cherry Servers floating IP resource by project ID."""
         return self.perform_request(
             Request(

@@ -10,7 +10,7 @@ from .resource_manager import ResourceManager, Request, Method
 class StorageManager(ResourceManager):
     """Manage Cherry Servers EBS resources."""
 
-    DEFAULT_TIMEOUT=120
+    DEFAULT_TIMEOUT = 120
 
     @property
     def name(self) -> str:
@@ -44,7 +44,9 @@ class StorageManager(ResourceManager):
             )
         )
 
-    def create(self, project_id: str, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def create(
+        self, project_id: str, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Create a Cherry Servers storage resource."""
         return self.perform_request(
             Request(
@@ -56,7 +58,9 @@ class StorageManager(ResourceManager):
             )
         )
 
-    def update(self, storage_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def update(
+        self, storage_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Update a Cherry Servers storage resource."""
         return self.perform_request(
             Request(
@@ -80,7 +84,9 @@ class StorageManager(ResourceManager):
             )
         )
 
-    def attach(self, storage_id: int, server_id: int, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def attach(
+        self, storage_id: int, server_id: int, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Attach a Cherry Servers storage resource to a server."""
         return self.perform_request(
             Request(

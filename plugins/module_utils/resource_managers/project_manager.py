@@ -10,7 +10,7 @@ from .. import normalizers
 class ProjectManager(ResourceManager):
     """Manage Cherry Servers project resources."""
 
-    DEFAULT_TIMEOUT=120
+    DEFAULT_TIMEOUT = 120
 
     @property
     def name(self) -> str:
@@ -44,7 +44,9 @@ class ProjectManager(ResourceManager):
             )
         )
 
-    def create(self, team_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def create(
+        self, team_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Create a single Cherry Servers project resource."""
         return self.perform_request(
             Request(

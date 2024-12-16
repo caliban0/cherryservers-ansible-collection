@@ -45,7 +45,9 @@ class ServerManager(ResourceManager):
             )
         )
 
-    def create_server(self, project_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def create_server(
+        self, project_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Create a Cherry Servers server resource."""
         return self.perform_request(
             Request(
@@ -57,7 +59,9 @@ class ServerManager(ResourceManager):
             )
         )
 
-    def update_server(self, server_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT) -> dict:
+    def update_server(
+        self, server_id: int, params: dict, timeout: int = DEFAULT_TIMEOUT
+    ) -> dict:
         """Update a Cherry Servers server resource."""
         return self.perform_request(
             Request(
